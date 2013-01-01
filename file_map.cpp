@@ -10,13 +10,15 @@
 #   include <fstream>
 #endif
 
+namespace fm
+{
 #if HAVE_SYS_MMAN_H == 1
 file_map::file_map( const char * _filename, bool _read_only )
     :m_size( 0 )
     ,m_region( 0 )
 {
     const int file_descriptor
-        = open( _filename, _rdOnly ? O_RDONLY : O_RDWR );
+        = open( _filename, _read_only ? O_RDONLY : O_RDWR );
 
     if( -1 != file_descriptor )
     {
@@ -34,7 +36,7 @@ file_map::file_map( const char * _filename, bool _read_only )
             static_cast<char *>(
                 mmap(
                     0, m_size,
-                    _rdOnly ? PROT_READ : PROT_READ | PROT_WRITE,
+                    _read_only ? PROT_READ : PROT_READ | PROT_WRITE,
                     MAP_PRIVATE, file_descriptor, 0
                 )
             );
@@ -52,16 +54,14 @@ file_map::~file_map() FILEMAP_NO_THROW
 {
     // unmap the region if it was mapped
     if( m_region )
-    {
         munmap( m_region, m_size );
-    }
 }
 
 // -------------------------------------------------------------------------- //
 
 #else // HAVE_SYS_MMAN_H
 
-file_map::file_map( const char * _filename, bool /* _rdOnly */ )
+file_map::file_map( const char * _filename, bool /* _read_only */ )
     :m_size( 0 )
     ,m_region( 0 )
 {
@@ -71,12 +71,12 @@ file_map::file_map( const char * _filename, bool /* _rdOnly */ )
         std::ios_base::binary | std::ios_base::in | std::ios_base::ate
     );
 
-	if (!filestream.is_open())
-		throw invalid_file( _filename );
+    if( !filestream.is_open() )
+        throw invalid_file( _filename );
 
-	filestream.exceptions( std::ifstream::failbit | std::ifstream::badbit );
-	const std::streamoff filesize = filestream.tellg();
-	char * region = 0;
+    filestream.exceptions( std::ifstream::failbit | std::ifstream::badbit );
+    const std::streamoff filesize = filestream.tellg();
+    char * region = 0;
 
     // copy the file to memory
     try
@@ -90,7 +90,7 @@ file_map::file_map( const char * _filename, bool /* _rdOnly */ )
 
     try
     {
-        filestream.seekg(std::ios_base::beg);
+        filestream.seekg( std::ios_base::beg );
         filestream.read( region, filesize );
         filestream.close();
     }
@@ -104,7 +104,6 @@ file_map::file_map( const char * _filename, bool /* _rdOnly */ )
 
     // everything seems fine, lets build the object
     m_region = region;
-
     m_size = filesize;
 }
 
@@ -115,3 +114,5 @@ file_map::~file_map() FILEMAP_NO_THROW
     delete [] m_region;
 }
 #endif // HAVE_SYS_MMAN_H
+
+} // file_map

@@ -9,6 +9,9 @@
 #   define FILEMAP_DELETE = delete
 #endif
 
+namespace fm
+{
+
 /**@struct invalid_file
  * @brief An exception thrown if the file cannot be mapped */
 struct invalid_file
@@ -35,8 +38,9 @@ struct file_map
 {
     /**@brief Constructs a null-terminated file mapping
      * @param[in] _filename A path to the file to map.
-     * @param[in] _read_only Whether the mapping should be protected against writes
-     * @throw invalid_file If the file can’t be opened, map_failed if mapping
+     * @param[in] _read_only Whether the mapping should be protected against writes (not that this
+     *            only works if mmap is used to map the file).
+     * @throw invalid_file If the file can’t be opened or if its size is 0 byte, map_failed if mapping
      * the file fails. */
     explicit
     file_map( const char * _filename, bool _read_only = false );
@@ -45,44 +49,23 @@ struct file_map
     ~file_map() FILEMAP_NO_THROW;
 
     /**@brief Returns a pointer to the first byte of the mapping */
-    char * data()
-    {
-        return m_region;
-    }
+    char * data();
 
     /**@brief Returns a const pointer to the first byte of the mapping */
-    const char * data() const
-    {
-        return m_region;
-    }
+    const char * data() const;
 
     /**@brief Returns the size of the mapping in bytes */
-    size_t size() const
-    {
-        return m_size;
-    }
+    size_t size() const;
 
 public: // support for iterators
     typedef char      *     iterator;
     typedef const char   *  const_iterator;
 
-    iterator        begin()
-    {
-        return data();
-    }
-    const_iterator  begin() const
-    {
-        return data();
-    }
+    iterator        begin();
+    const_iterator  begin() const;
 
-    iterator        end()
-    {
-        return data() + size();
-    }
-    const_iterator  end() const
-    {
-        return data() + size();
-    }
+    iterator        end();
+    const_iterator  end() const;
 
 private:
     size_t m_size;
@@ -94,4 +77,54 @@ private:
     file_map & operator=( const file_map & ) FILEMAP_DELETE;
 };
 
+// -------------------------------------------------------------------------- //
+inline
+const char * file_map::data() const
+{
+    return m_region;
+}
+
+// -------------------------------------------------------------------------- //
+inline
+char * file_map::data()
+{
+    return m_region;
+}
+
+// -------------------------------------------------------------------------- //
+inline
+file_map::iterator file_map::begin()
+{
+    return data();
+}
+
+// -------------------------------------------------------------------------- //
+inline
+file_map::const_iterator file_map::begin() const
+{
+    return data();
+}
+
+// -------------------------------------------------------------------------- //
+inline
+file_map::iterator file_map::end()
+{
+    return data() + size();
+}
+
+// -------------------------------------------------------------------------- //
+inline
+file_map::const_iterator file_map::end() const
+{
+    return data() + size();
+}
+
+// -------------------------------------------------------------------------- //
+inline
+size_t file_map::size() const
+{
+    return m_size;
+}
+
+} // namespace file_map
 #endif // FILE_MAP_H

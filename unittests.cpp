@@ -1,3 +1,4 @@
+#define HAVE_SYS_MMAN_H 1
 #include "file_map.h"
 #include "qlog.hpp"
 #include <UnitTest++/UnitTest++.h>
@@ -5,9 +6,11 @@
 #include <iostream>
 #include <fstream>
 
+using namespace fm;
+// -------------------------------------------------------------------------- //
 static unsigned test_number = 1;
 void startLogging();
-
+// -------------------------------------------------------------------------- //
 struct temporary_file
 {
     temporary_file()
@@ -42,7 +45,7 @@ int main()
 
     return ret;
 }
-
+// -------------------------------------------------------------------------- //
 void startLogging()
 {
     using namespace qlog;
@@ -53,7 +56,7 @@ void startLogging()
     warning.prepend() << "[" << color( green ) << "ww" << color() << "] ";
     error.prepend() << "[" << color( red, true ) << "EE" << color() << "] " << color( white, true );
 }
-
+// -------------------------------------------------------------------------- //
 TEST( CreateFileAndMap )
 {
     qlog::info << test_number++ << ". CreateFileAndMap\n";
@@ -77,7 +80,7 @@ TEST( CreateFileAndMap )
         CHECK( 0 );
     }
 }
-
+// -------------------------------------------------------------------------- //
 TEST( MapAndRead )
 {
     qlog::info << test_number++ << ". MapAndRead\n";
@@ -104,4 +107,41 @@ TEST( MapAndRead )
     {
         CHECK( 0 );
     }
+}
+// -------------------------------------------------------------------------- //
+TEST( MapNoneExistingFile )
+{
+    qlog::info << test_number++ << ". MapNoneExistingFile\n";
+    bool exceptionThrown = false;
+    try
+    {
+        file_map mapping( "somethingrandomthatdoesnotexist" );
+    }
+    catch ( const invalid_file & file )
+    {
+        exceptionThrown = true;
+    }
+
+    CHECK( exceptionThrown );
+}
+// -------------------------------------------------------------------------- //
+TEST( MapZeroByteFile )
+{
+    qlog::info << test_number++ << ". MapZeroByteFile\n";
+    bool exceptionThrown = false;
+
+    // create a file
+    temporary_file file;
+
+    // try and map it
+    try
+    {
+        file_map mapping( file.name() );
+    }
+    catch( ... )
+    {
+        exceptionThrown = true;
+    }
+
+    CHECK( exceptionThrown );
 }
